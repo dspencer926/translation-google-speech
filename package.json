@@ -1,0 +1,40 @@
+{
+  "name": "speakeasyv3",
+  "version": "1.0.0",
+  "description": "speakeasy v3 backend",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon app.js",
+    "start": "node ./app.js",
+    "debugger": "DEBUG=*:* npm run dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dspencer926/translation"
+  },
+  "author": "David",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dspencer926/translation"
+  },
+  "homepage": "https://github.com/dspencer926/translation",
+  "dependencies": {
+    "@google-cloud/speech": "^0.10.2",
+    "@google-cloud/translate": "^0.8.2",
+    "body-parser": "^1.17.2",
+    "cors": "^2.8.3",
+    "dotenv": "^4.0.0",
+    "express": "^4.15.3",
+    "fs": "0.0.1-security",
+    "isomorphic-fetch": "^2.2.1",
+    "morgan": "^1.8.1",
+    "node-record-lpcm16": "^0.3.0",
+    "nodemon": "^1.11.0",
+    "path": "^0.12.7",
+    "request": "^2.81.0",
+    "socket.io": "^2.0.3",
+    "socket.io-stream": "^0.9.1",
+    "sox-stream": "^2.0.1"
+  }
+}

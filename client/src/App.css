@@ -1,0 +1,533 @@
+html {
+  height: 100%;
+  width: 100%;
+  background-color: #FFFFEA;
+}
+
+.App {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/*--------------------------
+       NAV COMPONENT
+--------------------------*/
+
+#nav-container {
+  display: flex;
+  position: fixed;
+  top: 0%;
+}
+
+#nav-div {
+  position: fixed;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 60px;
+  background-color: #FFED66;
+  align-items: center;
+  justify-content: center;
+  justify-content: space-between;
+}
+
+.link {
+  color: black;
+  text-decoration: none;
+}
+
+#nav-title-div {
+  flex: 1;
+  padding: 20px;
+}
+
+#nav-link-div {
+  flex: 2;
+  padding: 20px;
+}
+
+#nav-link-div {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+/*--------------------------
+      WELCOME COMPONENT
+--------------------------*/
+
+#welcome-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 30% 0;
+}
+
+#welcome-div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#welcome-div, #title-div, #sub-title-div, #login-signup-guest-div {
+  display: flex;
+  align-items: center;
+  border: 1px solid black;
+  margin: 10px 15px;
+}
+
+h1, h2 {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
+#login-signup-guest-div {
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px;
+}
+
+#login-signup-guest-div div {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  border: 1px solid black;
+  margin: 2px;
+}
+
+/*--------------------------
+      FOOTER COMPONENT
+--------------------------*/
+
+footer {
+  position: fixed;
+  bottom: 0%;
+  width: 100%;
+}
+
+#footer-container {
+  width: 100%;
+}
+
+#footer-div {
+  display: flex;
+  height: 40px;
+  width: 100%;
+  background-color: green;
+  justify-content: center;
+  align-items: center;
+}
+
+/*---------------------------------------
+RECORD COMPONENT
+---------------------------------------*/
+
+#recorder-div {
+  margin: 75px;
+}
+
+/*---------------------------------------
+TRANSLATION COMPONENT
+---------------------------------------*/
+
+#translation-container {
+  display: flex;
+  width: 100%;
+  margin: 30px auto;
+  flex-direction: column;
+}
+
+#translation-div, #input-div, #translation-form {
+  flex-direction: column;
+  display: flex;
+  width: 100%;
+}
+
+#input-box, #result-box, #sts-box {
+  width: 85%;
+  font-size: 1.25em;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+#sts-box {
+  height: 125px;
+  background-color: #FFED66;
+  border-top: 1px solid black;
+  margin: auto;
+  font-size: 1.5em;
+}
+
+.text-animate {
+  animation-name: fade-in;
+  animation-duration: 1s;
+}
+
+@keyframes fade-in {
+    from {color: rgba(0,0,0,0)};
+    to {color: rgba(0,0,0,1)};
+}
+
+textarea {
+  font-size: 1em;
+  outline: none;
+  margin: auto;
+  resize: none;
+}
+
+#input-box {
+  width: 85%;
+  height: 200px;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  background-color: #FFED66;
+  border: 1px solid #FFED66;
+}
+
+
+#result-box {
+  width: 85%;
+  height: 200px;
+  background-color: #00CECB;
+  border: 1px solid #00CECB;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+}
+
+select, input {
+  border: 1px solid black;
+  margin: 10px;
+  outline: none;
+}
+
+
+option {
+  background-color: #FFFFEA;
+}
+
+button {
+  outline: none;
+}
+
+select {
+  height: 40px;
+  font-size: 1.25em;
+  text-align: center;
+  width: 130px;
+}
+
+
+#to-from-div {
+  display: flex;
+  position: relative;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  padding-left: 4px;
+}
+
+#submit-btn {
+  justify-content: center;
+  position: fixed;
+  bottom: 15%;
+  left: 37%;
+  margin: 0 auto 5px;
+  width: 25%;
+  border: none;
+  border-radius: 15px;
+  padding: 15px;
+  font-size: 1.25em;
+  outline: none;
+}
+
+#submit-btn:active {
+  color: gray;
+}
+
+
+#from-div {
+  display: flex;
+  flex-direction: row;
+  flex: 3;
+}
+
+#from-text {
+  position: absolute;
+  bottom: 90%;
+  left: 5%;
+  background-color: #FFED66;
+  padding: 5px;
+  z-index: 2;
+} 
+
+#langFrom {
+    box-sizing: border-box;
+    position: relative;
+    width: 140px;
+    left: 15%;
+    margin: 0;
+    top: 15%;
+    padding-left: 20px;
+    border-radius: 0;
+    background-color: #FFED66;
+    border: none;
+    outline: none;
+}
+
+#triangle-div {
+  position: relative;
+  box-sizing: border-box;
+  margin-bottom: 10.5%;
+  flex: 1;
+}
+
+#triangle-topleft {
+  position: absolute;
+	width: 0;
+	height: 0;
+  top: 15%;
+	border-top: 40px solid #FFED66;
+	border-right: 40px solid transparent;
+}
+
+#triangle-bottomright {
+  position: absolute;
+	width: 0;
+	height: 0;
+  top: 15%;
+	border-bottom: 40px solid #00CECB;
+	border-left: 40px solid transparent;
+}
+
+#to-div {
+  display: flex;
+  flex-direction: row;
+  flex: 3;
+}
+
+
+#langTo {
+    box-sizing: border-box;
+    width: 142px;
+    right: 8%;
+    margin: 0;
+    top: 15%;
+    position: relative;
+    padding-left: 10px;
+    border-radius: 0;
+    border: none;
+    /*border-bottom: 1px solid #FFFFEA;*/
+    /*border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;*/
+    background-color: #00CECB;
+    outline: none;
+}
+
+#to-text {
+  position: absolute;
+  top: 85%;
+  right: 5%;
+  color: #FFFFEA;
+  background-color: #00CECB;
+  padding: 5px;
+  z-index: 2;
+}
+
+
+#two-button-div {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  justify-content: space-around;
+  align-items: center;
+  margin: 25px 25px 0 25px;
+  background-color: #FFFFEA;
+}
+
+#save-btn, #clear-btn  {
+  font-size: 1.5em;
+  border: none;
+  padding: 10px 15px;
+}
+
+#save-btn {
+  background-color: #00CECB;
+  /*color: #FFFFEA;*/
+  border-radius: 15px;
+}
+
+#clear-btn {
+  background-color: #00CECB;
+  /*color: #FFFFEA;*/
+  border-radius: 15px;
+  
+}
+
+
+#convo-btn {
+  font-size: 2em;
+  padding: 5px 10px;
+  background-color: #FFFFEA;
+  border: none;
+  outline: none;
+  border-radius: 15px;
+  
+}
+
+#recognize-button-container {
+  display: flex;
+  position: absolute;
+  bottom: 4%;
+  left: 43%;
+  border-radius: 100%;
+  padding: 10px;
+}
+
+.off {
+  background-color: black;
+  color: #FFFFEA;
+  /*background-color: #FFFFEA;*/
+  /*color: black;*/
+  border: none;
+}
+
+@keyframes record {
+    0%   {color: #FFFFEA}
+    50%  {color: #FF5E5B}
+    100% {color: #FFFFEA}
+}
+
+.rec {
+  background-color: #FF5E5B;
+  color: #FFFFEA;
+  border: none;
+  animation-name: record;
+  animation-duration: 1s;
+  animation-iteration-count: 20;
+  animation-timing-function: ease;
+}
+
+#tr-again-div {
+  text-align: right;
+  width: 318.5px;
+  box-sizing: border-box;
+  margin: auto; 
+  padding: 0 20px 10px 0;
+  background-color: #FFED66;
+}
+
+#start-recog {
+  background: none;
+  border: none;
+  outline: none;
+}
+
+#status-div {
+  margin: 35px;
+  width: 100px;
+  height: 100px;
+}
+
+#send-btn {
+  display: flex;
+  position: absolute;
+  right: 5%;
+  bottom: 5%;
+  width: 75px;
+  font-size: 1.5em;
+  text-align: right;
+  background-color: lightgreen;
+  border: none;
+  border-radius: 15px;
+  padding: 10px;
+  justify-content: center;
+}
+
+#choice-box {
+  width: 70%;
+  left: 15%;
+  top: 15%;
+  justify-content: space-between;
+  display: flex;
+  border-radius: 15px;
+  background-color: gray;
+}
+
+.on-top {  /* for translation choice box*/
+  position: fixed;
+  z-index: 2;
+}
+
+#choice-box ul {
+  margin-top: 10%;
+  padding: 20px;
+  list-style: none;
+}
+
+#choice-box li {
+margin-bottom: 5px;
+ background-color: #FFFFEA;
+ border-radius: 15px;
+}
+
+#choice-box button {
+  margin: 15px 0;
+  font-size: 1.35em;
+}
+
+xbox {
+  height: 15px;
+  width: 15px;
+  display: flex;
+  position: absolute;
+  left: 0%;
+  top: 0%;
+  color: #FFED66;
+  background-color: #00CECB;
+  font-size: .5em;
+  padding: 5px;
+  border-radius: 100%;
+  justify-content: center;
+  align-items: center;
+  margin: 5%;
+}
+
+
+/*-----------------------------
+PHRASE LIST COMPONENT 
+-----------------------------*/
+
+.phrase-list-div {
+  margin-top: 60px;
+}
+
+.add-phrase-form {
+  display: flex;
+  flex-direction: row;
+  margin: 0;
+  background-color: #FFED66;
+}
+
+.edit-phrase-form {
+  display: flex;
+  flex-direction: row;
+}
+
+.add-phrase-form input {
+  margin: 5px;
+}
+
+td {
+  margin: 1px;
+  padding: 0px;
+  border: none;
+}
+
+th {
+  font-size: .7em;
+}
