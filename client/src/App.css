@@ -425,6 +425,7 @@ select {
   background: none;
   border: none;
   outline: none;
+  cursor: pointer;
 }
 
 #status-div {
