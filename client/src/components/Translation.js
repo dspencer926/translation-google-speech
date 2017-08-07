@@ -225,12 +225,6 @@ sendMsg(e) {
 // sends input text to backend to be translated and sets state with translated resul [then sends info to TTS] <-- own func?
 translation(e) {
   this.setState({resultStyle: null});
-  let data = {
-    message: 'Good morning',
-    from: this.state.langFrom,
-    to: 'pt',
-  };
-  io.emit('translate', data);
   // fetch('/translation/translate', {
   //   credentials: 'same-origin',
   //   method: 'POST',
@@ -472,8 +466,7 @@ translation(e) {
               <textarea id='input-box' name='text' rows='3' value={this.state.inputText} className={this.state.textStyle} onChange={(e) => this.handleInput(e)}/>
               <div id='tr-again-div'onClick={this.translation}>Translate Again</div>
                 <div id='to-from-div'>
-                  <div id='from-div'>
-                    <select name='langFrom' defaultValue='eng-USA' id='langFrom' onChange={(e) => {this.handleLangFromChange(e)}}> 
+                    <select name='langFrom' className='langInput' defaultValue='eng-USA' id='langFrom' onChange={(e) => {this.handleLangFromChange(e)}}> 
                       <option value='en'>English</option>
                       <option value='es'>Spanish</option>
                       <option value='fr'>French</option>
@@ -490,13 +483,13 @@ translation(e) {
                       <option value='ko'>Korean</option>
                       <option value='tr'>Turkish</option>
                     </select>
-                  </div>
+                  <div id='yellow'></div>
                   <div id='triangle-div'>
                     <div id='triangle-topleft'></div>
                     <div id='triangle-bottomright'></div>
                   </div>
-                  <div id='to-div'>
-                    <select name='langTo' id='langTo' defaultValue='es' onChange={(e) => {this.handleLangToChange(e)}}> 
+                  <div id='green'></div>
+                    <select name='langTo' id='langTo' className='langInput' defaultValue='es' onChange={(e) => {this.handleLangToChange(e)}}> 
                       <option value='en'>English</option>
                       <option value='es'>Spanish</option>
                       <option value='fr'>French</option>
@@ -513,7 +506,6 @@ translation(e) {
                       <option value='ko'>Korean</option>
                       <option value='tr'>Turkish</option>
                     </select>
-                  </div>
                   </div>
                 {/*<input id='submit-btn' type='submit'/>*/}
               <textarea id='result-box' name='result' rows='3' value={this.state.translatedResponse} className={this.state.resultStyle} onChange={(e) => this.handleResult(e)}></textarea>
