@@ -511,18 +511,22 @@ translation(e) {
               <textarea id='result-box' name='result' rows='3' value={this.state.translatedResponse} className={this.state.resultStyle} onChange={(e) => this.handleResult(e)}></textarea>
             </form>
           </div>
-          <div id='two-button-div'>
-            <button id='save-btn'>Log</button>
-            <button id='convo-btn' style={this.state.convoStyle} onClick={this.convoToggle}><i className="fa fa-comments-o" aria-hidden="true"></i></button>
-            <button id='clear-btn' onClick={this.clear}>Clear</button>
+          <div id='controls'>
+            <div id='top-row'>
+              <button id='log-btn'>Log</button>
+              <button id='convo-btn' style={this.state.convoStyle} onClick={this.convoToggle}><i className="fa fa-comments-o" aria-hidden="true"></i></button>
+              <button id='clear-btn' onClick={this.clear}>Clear</button>
+            </div>
+          <div id='bottom-row'>
+            <div id='status-div'>{this.state.status}</div>
+            <div id='recognize-button-container' className={this.state.recClass}>
+              <button id='start-recog'><i className={`${this.state.recClass} fa fa-microphone fa-3x`} aria-hidden="true"></i></button>
+            </div>
+            <button id='send-btn' style={this.state.sendStyle} onClick={(e) => {this.sendMsg(e)}}>Send!</button>
           </div>
         </div>
-        <div id='recognize-button-container' className={this.state.recClass}>
-          <button id='start-recog'><i className={`${this.state.recClass} fa fa-microphone fa-3x`} aria-hidden="true"></i></button>
-        </div>
-        <div id='status-div'>{this.state.status}</div>
-        <button id='send-btn' style={this.state.sendStyle} onClick={(e) => {this.sendMsg(e)}}>Send!</button>
       </div>
+    </div>
     );
   }
 }

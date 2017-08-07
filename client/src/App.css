@@ -123,14 +123,6 @@ footer {
 }
 
 /*---------------------------------------
-RECORD COMPONENT
----------------------------------------*/
-
-#recorder-div {
-  margin: 75px;
-}
-
-/*---------------------------------------
 TRANSLATION COMPONENT
 ---------------------------------------*/
 
@@ -349,24 +341,33 @@ select {
   z-index: 2;
 }
 
+#controls {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: 25px auto 20px;
 
-#two-button-div {
+}
+
+#top-row {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  justify-content: space-around;
+  /*justify-content: space-around;*/
   align-items: center;
-  margin: 25px 25px 0 25px;
+  margin: 0 25px;
   background-color: #FFFFEA;
 }
 
-#save-btn, #clear-btn  {
+
+#log-btn, #clear-btn  {
   font-size: 1.5em;
+  flex: 1;
   border: none;
   padding: 10px 15px;
 }
 
-#save-btn {
+#log-btn {
   background-color: #00CECB;
   /*color: #FFFFEA;*/
   border-radius: 15px;
@@ -378,13 +379,27 @@ select {
   border-radius: 15px;
   
 }
+#top-row *, #bottom-row * {
+  box-sizing: border-box;
+}
 
+#bottom-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #FFFFEA;
+  margin-top: 15px;
+
+}
 
 #convo-btn {
   display: flex;
-  align-self: center;
+  flex: 1;
+  justify-content: center;
   font-size: 2em;
-  padding: 5px 10px;
+  padding: 10px;
+  margin: 0 5px;
   background-color: #FFFFEA;
   border: none;
   outline: none;
@@ -394,11 +409,12 @@ select {
 
 #recognize-button-container {
   display: flex;
-  position: absolute;
-  align-self: center;
-  bottom: 5%;
+  /*flex: 1;*/
+  justify-content: center;
   border-radius: 100%;
   padding: 10px;
+  margin: 0 10%;
+  
 }
 
 .off {
@@ -442,17 +458,19 @@ select {
 }
 
 #status-div {
-  margin: 35px;
-  width: 100px;
-  height: 100px;
+  /*margin: 35px;*/
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  /*width: 100px;
+  height: 100px;*/
 }
 
 #send-btn {
   display: flex;
-  position: absolute;
-  right: 5%;
-  bottom: 5%;
-  width: 75px;
+  flex: 1;
+  /*width: 75px;*/
   font-size: 1.5em;
   text-align: right;
   background-color: lightgreen;
@@ -511,48 +529,12 @@ xbox {
   margin: 5%;
 }
 
-
-/*-----------------------------
-PHRASE LIST COMPONENT 
------------------------------*/
-
-.phrase-list-div {
-  margin-top: 60px;
-}
-
-.add-phrase-form {
-  display: flex;
-  flex-direction: row;
-  margin: 0;
-  background-color: #FFED66;
-}
-
-.edit-phrase-form {
-  display: flex;
-  flex-direction: row;
-}
-
-.add-phrase-form input {
-  margin: 5px;
-}
-
-td {
-  margin: 1px;
-  padding: 0px;
-  border: none;
-}
-
-th {
-  font-size: .7em;
-}
-
 /*DESKTOP_____________________________________________*/
 
  @media only screen and (min-width: 750px) {
+
   html {
     font-size: 1em;
   }
-
-
 
  }
