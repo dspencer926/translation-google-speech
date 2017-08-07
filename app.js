@@ -8,7 +8,6 @@ var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
 const ss = require('socket.io-stream');
 const fs = require('fs');
-const sox = require('sox-stream');
 const request = require('request');
 const translate = require('@google-cloud/translate');
 const projectId = 'translation-app-168502';
@@ -22,9 +21,6 @@ var speech = require('@google-cloud/speech')({
 });
 
 require('dotenv').config()
-
-let appId = 'NMDPTRIAL_dspencer926_gmail_com20170528030155';
-  let appKey = '8491cf9930c4e9470946769de7d0d55551e262248a00b4ba09e6597051bf62d550326f80f658c8009e3e9d850e72db5f543d84df3d3899471ef2b76fb11a4402';
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, function() {
@@ -54,14 +50,14 @@ io.on('connection', (socket) => {
   })
 
   //stream received for speech recognition
-  ss(socket).on('stream', function(stream, langFrom) {
+  ss(socket).on('stream', function(stream, langFrom, langTo) {
     console.log('streamed');
 
 const speechReq = {
   config: {
     encoding: 'LINEAR16',
     sampleRateHertz: 44100,
-    languageCode: 'en'
+    languageCode: langFrom,
   },
   interimResults: false // If you want interim results, set this to true
 };
@@ -70,10 +66,42 @@ const speechReq = {
 const recognizeStream = speech.streamingRecognize(speechReq)
   .on('error', console.error)
   .on('data', (data) => {
-    io.emit('translated', data.results[0].alternatives[0].transcript)
-    data.results[0].alternatives.forEach((val)=>{
-      console.log(val.transcript)
+    let text = data.results[0].alternatives[0].transcript;
+    console.log(`recognized: ${text}`);
+    let options = {
+      from: langFrom,
+      to: langTo,
+    }
+    translateClient.translate(text, options)
+    .then((results) => {
+      translation = results[0];
+      console.log(`translated: ${translation}`);
+      options = {
+        from: options.to,
+        to: options.from,
+      }})
+      .catch((err) => {
+      console.error('ERROR:', err);
     })
+    .then(() => {translateClient.translate(translation, options)
+      .then((results) => {
+        let stsTranslation = results[0];
+        console.log(`translated2: ${stsTranslation}`);
+        console.log('translation', translation)
+        console.log('sts translation', stsTranslation);
+        socket.emit('sts', {
+            translation: translation, 
+            stsTranslation: stsTranslation,
+            source: options.from, 
+            target: options.to})
+      })
+    })
+
+    
+    // socket.emit('recognized', data.results[0].alternatives[0].transcript)
+    // data.results[0].alternatives.forEach((val)=>{
+    //   console.log(val.transcript)
+    // })
   })
       // process.stdout.write(
       //   (data.results[0] && data.results[0].alternatives[0])
@@ -81,52 +109,28 @@ const recognizeStream = speech.streamingRecognize(speechReq)
       //     : `\n\nReached transcription time limit, press Ctrl+C\n`));
 
 stream.pipe(recognizeStream);
-
-
-// using SoX _______________________________________________________________________________________
-    // stream.pipe(sox({
-    //   output: {
-    //       bits: 16,
-    //       rate: 16000,
-    //       channels: 1,
-    //       type: 'wav'
-    //   }
-    // })).pipe(request.post({
-    //   'url'     : `https://dictation.nuancemobility.net/NMDPAsrCmdServlet/dictation?appId=${appId}&appKey=${appKey}`,   //add multi-language input functionality
-    //   'headers' : {
-    //     'Transfer-Encoding': 'chunked',
-    //     'Content-Type': 'audio/x-wav;codec=pcm;bit=16;rate=16000',
-    //     'Accept': 'text/plain',
-    //     'Accept-Language': langFrom,
-    //   }
-    // }, (err, res, body) => {
-    //   console.log(body);
-    //   socket.emit('recognized', body);
-    // }))
-//_________________________________________________________________________________________________________
-
   })
 
   //translation with socket? 
   socket.on('translate', (data) => {
-    // console.log('translate testing');
-    // console.log(data);
-    // let text = data.message;
-    // let options = {
-    //   from: 'en',
-    //   to: data.to,
-    // }
-    // translateClient.translate(text, options)
-    // .then((results) => {
-    //   translation = results[0];
-    //   console.log(translation);
-    //   options = {
-    //     from: options.to,
-    //     to: options.from,
-    //   }})
-    //   .catch((err) => {
-    //   console.error('ERROR:', err);
-    // })
+    console.log('translate testing');
+    console.log(data);
+    let text = data.message;
+    let options = {
+      from: 'en',
+      to: data.to,
+    }
+    translateClient.translate(text, options)
+    .then((results) => {
+      translation = results[0];
+      console.log(translation);
+      options = {
+        from: options.to,
+        to: options.from,
+      }})
+      .catch((err) => {
+      console.error('ERROR:', err);
+    })
   })
 
   //send translated message to other user

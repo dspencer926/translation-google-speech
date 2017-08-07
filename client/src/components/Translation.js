@@ -39,6 +39,18 @@ class Translation extends Component {
     this.clear = this.clear.bind(this);
     this.speak = this.speak.bind(this);
 
+    io.on('sts', (response) => {
+      this.setState({
+        inputText: response.stsTranslation,
+        rdyToRecord: true,
+        result: response.translation,
+        resultStyle: 'text-animate',
+        status: 'Ready to send message',
+        sendStyle: {backgroundColor: 'lightgreen'},
+        canSend: true,
+      })
+    })
+
     io.on('translatedResponse', (response) => {
       console.log(response);
       this.setState({
@@ -50,27 +62,19 @@ class Translation extends Component {
         this.speak()
       })
     });
-    io.on('translated', (data) => {
-      console.log(data);
-    })
     io.on('received', () => {
       this.setState({
         status: 'Message received',
         rdyToRecord: true,
       });
     })
-    io.on('recognized', (body) => {
-      console.log(body);
-      this.recognizeAudio(body);
+    io.on('recognized', (message) => {
+      console.log(message);
+      this.setState({inputText: message,})
     })
   }
 
 componentDidMount() {
-  io.emit('translate', {
-    message: 'Good morning',
-    from: this.state.langFrom,
-    to: 'pt',
-  });
   let langFrom = document.querySelector('#langFrom')[0].value;
   let langTo = document.querySelector('#langTo')[0].value;
   this.setState({
@@ -108,7 +112,7 @@ handleLangToChange(e) {
 }
 
 // sends recorded audio to backend for recognition [then creates choice div if necessary] <-- make its own function?
-recognizeAudio(json) {
+recognizeAudio(message) {
 
 
   this.setState({textStyle: null});
@@ -126,22 +130,11 @@ recognizeAudio(json) {
   //   return res.json()
   // })
   // .then((json) => {
-    console.log(json);
     this.setState({
       status: 'Ready for input',
       rdyToRecord: true,
     })
-    if (json.charAt(0) === '<') {
-      console.log('in that');
-      this.setState({
-        status: 'Please try recording again',
-        rdyToRecord: true,
-      });
-    } else {
-      let resultArr = json.split('\n');
-      console.log(resultArr);
-      if (resultArr.length > 1) {this.choiceDiv(resultArr)}
-    }
+
   // })
 }
   
@@ -272,37 +265,37 @@ translation(e) {
     console.log('in speak function');
     let speakLang;
     switch (this.state.langFrom) {
-      case 'spa-XLA': 
+      case 'es': 
         speakLang = 'Spanish Latin American Female';
         break;
-      case 'fra-FRA': 
+      case 'fr': 
         speakLang = 'French Female';
         break;
-      case 'por-BRA': 
+      case 'pt': 
         speakLang = 'Brazilian Portuguese Female';
         break;
-      case 'rus-RUS': 
+      case 'ru': 
         speakLang = 'Russian Female';
         break;
-      case 'hin-IND': 
+      case 'hi': 
         speakLang = 'Hindi Female';
         break;
-      case 'ita-ITA': 
+      case 'it': 
         speakLang = 'Italian Female';
         break;
-      case 'ara-XWW': 
+      case 'ar-eg': 
         speakLang = 'Arabic Male';
         break;
-      case 'cmn-CHN': 
+      case 'zh-cn': 
         speakLang = 'Chinese Female';
         break;
-      case 'jpn-JPN': 
+      case 'ja': 
         speakLang = 'Japanese Female';
         break;
-      case 'deu-DEU': 
+      case 'de': 
         speakLang = 'Deutsch Female';
         break;
-      case 'eng-USA': 
+      case 'en': 
         speakLang = 'US English Female';
         break;
     }
@@ -417,7 +410,7 @@ translation(e) {
 
         record.onclick = () => {
           var sStream = ss.createStream();
-          ss(io).emit('stream', sStream, this.state.langFrom);
+          ss(io).emit('stream', sStream, this.state.langFrom, this.state.langTo);
           if (this.state.rdyToRecord === true) {
           mediaRecorder.start(10000);
           this.setState({
@@ -481,21 +474,21 @@ translation(e) {
                 <div id='to-from-div'>
                   <div id='from-div'>
                     <select name='langFrom' defaultValue='eng-USA' id='langFrom' onChange={(e) => {this.handleLangFromChange(e)}}> 
-                      <option value='eng-USA'>English</option>
-                      <option value='spa-XLA'>Spanish</option>
-                      <option value='fra-FRA'>French</option>
-                      <option value='por-BRA'>Portuguese</option>
-                      <option value='ita-ITA'>Italian</option>
-                      <option value='rus-RUS'>Russian</option>
-                      <option value='ara-XWW'>Arabic</option>
-                      <option value='cmn-CHN'>Chinese</option>
-                      <option value='jpn-JPN'>Japanese</option>
-                      <option value='deu-DEU'>German</option>
-                      <option value='heb-ISR'>Hebrew</option>
-                      <option value='fin-FIN'>Finnish</option>
-                      <option value='hin-IND'>Hindi</option>
-                      <option value='kor-KOR'>Korean</option>
-                      <option value='tur-TUR'>Turkish</option>
+                      <option value='en'>English</option>
+                      <option value='es'>Spanish</option>
+                      <option value='fr'>French</option>
+                      <option value='pt'>Portuguese</option>
+                      <option value='it'>Italian</option>
+                      <option value='ru'>Russian</option>
+                      <option value='ar-eg'>Arabic</option>
+                      <option value='zh-cn'>Chinese</option>
+                      <option value='ja'>Japanese</option>
+                      <option value='de'>German</option>
+                      <option value='iw'>Hebrew</option>
+                      <option value='fi'>Finnish</option>
+                      <option value='hi'>Hindi</option>
+                      <option value='ko'>Korean</option>
+                      <option value='tr'>Turkish</option>
                     </select>
                   </div>
                   <div id='triangle-div'>
@@ -510,8 +503,8 @@ translation(e) {
                       <option value='pt'>Portuguese</option>
                       <option value='it'>Italian</option>
                       <option value='ru'>Russian</option>
-                      <option value='ar'>Arabic</option>
-                      <option value='zh-CN'>Chinese</option>
+                      <option value='ar-eg'>Arabic</option>
+                      <option value='zh-cn'>Chinese</option>
                       <option value='ja'>Japanese</option>
                       <option value='de'>German</option>
                       <option value='iw'>Hebrew</option>

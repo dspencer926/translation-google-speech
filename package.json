@@ -1,7 +1,7 @@
 {
-  "name": "speakeasyv3",
+  "name": "speakeasy-google-speech",
   "version": "1.0.0",
-  "description": "speakeasy v3 backend",
+  "description": "speakeasy with google speech api",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dspencer926/translation"
+    "url": "git+https://github.com/dspencer926/translation-google-speech"
   },
   "author": "David",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/dspencer926/translation"
+    "url": "https://github.com/dspencer926/translation-google-speech"
   },
-  "homepage": "https://github.com/dspencer926/translation",
+  "homepage": "https://github.com/dspencer926/translation-google-speech",
   "dependencies": {
     "@google-cloud/speech": "^0.10.2",
     "@google-cloud/translate": "^0.8.2",
@@ -27,6 +27,7 @@
     "dotenv": "^4.0.0",
     "express": "^4.15.3",
     "fs": "0.0.1-security",
+    "grpc": "^1.4.1",
     "isomorphic-fetch": "^2.2.1",
     "morgan": "^1.8.1",
     "node-record-lpcm16": "^0.3.0",
