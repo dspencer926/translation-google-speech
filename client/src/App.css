@@ -1,13 +1,14 @@
-html {
+html, body, #root, .App, #translation-container {
   height: 100%;
   width: 100%;
+}
+
+html {
   background-color: #FFFFEA;
   font-size: .75em;
 }
 
 .App {
-  height: 100%;
-  width: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -128,9 +129,9 @@ TRANSLATION COMPONENT
 
 #translation-container {
   display: flex;
-  width: 100%;
   margin: 30px auto;
   flex-direction: column;
+  justify-content: center;
 }
 
 #translation-div, #input-div, #translation-form {
@@ -536,6 +537,10 @@ xbox {
 
   html {
     font-size: 1em;
+  }
+
+  textarea {
+    font-size: 2em !important; 
   }
 
  }
