@@ -15,7 +15,7 @@ class Translation extends Component {
       inputText: '',                                                //  input text to be translated
       recogResult: '',                                              //  result of speech recog
       stsTranslation: '',                                           //  STS translation
-      translatedResponse: '',                                       //  response from other user    
+      responseBox: '',                                              //  translated text/response to be displayed   
       result: '',                                                   //  translated text in target language
       isRecording: false,                                           //  true/false is currently recording voice
       rdyToRecord: true,                                            //  true/false is ready to record
@@ -28,26 +28,28 @@ class Translation extends Component {
       canSend: false,                                               //  should send btn display
       sendStyle: {backgroundColor: '#FF5E5B'},                      //  bkgrnd color of send button
     }
-    this.handleLangFromChange = this.handleLangFromChange.bind(this);
-    this.handlePhraseSubmit = this.handlePhraseSubmit.bind(this);
-    this.handleLangToChange = this.handleLangToChange.bind(this);
     this.recorderInitialize = this.recorderInitialize.bind(this);
     this.recognizeAudio = this.recognizeAudio.bind(this);
-    this.handleInput = this.handleInput.bind(this);
-    this.translation = this.translation.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.translateAgain = this.translateAgain.bind(this);
     this.convoToggle = this.convoToggle.bind(this);
     this.clear = this.clear.bind(this);
     this.speak = this.speak.bind(this);
 
     io.on('sts', (response) => {
-      this.setState({
-        inputText: response.stsTranslation,
-        rdyToRecord: true,
-        result: response.translation,
-        resultStyle: 'text-animate',
-        status: 'Ready to send message',
-        sendStyle: {backgroundColor: 'lightgreen'},
-        canSend: true,
+      this.setState((prevState) => { 
+        return {
+          inputText: response.stsTranslation,
+          rdyToRecord: true,
+          result: response.translation,
+          responseBox: this.state.convoMode? prevState.responseBox : response.translation,
+          resultStyle: 'text-animate',
+          status: this.state.convoMode? 'Ready to send message' : 'Ready for input',
+          sendStyle: this.state.convoMode? {backgroundColor: 'lightgreen'} : {backgroundColor: '#FF5E5B'},
+          canSend: this.state.convoMode? true: false,
+        }
+      }, () => {
+        this.state.convoMode? null : this.speak();
       })
     })
 
@@ -55,7 +57,7 @@ class Translation extends Component {
       console.log(response);
       this.setState({
         inputText: '',
-        translatedResponse: response,
+        responseBox: response,
         rdyToRecord: true,
       }, () => {
         io.emit('received');
@@ -86,29 +88,11 @@ componentDidMount() {
   this.recorderInitialize()
 }
 
-// componentDidUpdate() {
-//   console.log('updating');
-//   console.log(this.state);
-// }
-
-//sets state with input text
-handleInput(e) {
-  this.setState({inputText: e.target.value});
-}
-
-//sets state with translation result text
-handleResult(e) {
-  this.setState({result: e.target.value});
-}
-
-// state change for source language change
-handleLangFromChange(e) {      
-  this.setState({langFrom: e.target.value});
-}
-
-// state change for target language change
-handleLangToChange(e) {
-  this.setState({langTo: e.target.value});
+//sets state to handle changes
+handleChange(e, field) {
+  this.setState({
+    [field]: e.target.value,
+  });
 }
 
 // sends recorded audio to backend for recognition [then creates choice div if necessary] <-- make its own function?
@@ -138,6 +122,8 @@ recognizeAudio(message) {
   // })
 }
   
+
+// will be able to delete as soon as I implement text animation in a different function
 choiceDiv(arr) {
   this.setState({
     status: 'Choose phrase',
@@ -186,25 +172,6 @@ choiceDiv(arr) {
     // console.log(phrase);
 //___________________________________________________________________________________________________________
 
-
-
-// trying to do the Nuance TTS fetch
-//________________________________________________________________________________________________________________
-  // fetch('http://localhost:3001/translation/speak', {
-  //   credentials: 'same-origin',
-  //   method: 'GET'})
-  //   .then((response) => {
-  //     return response;
-  //   })
-  //   .then((blob) => {
-  //     let ctx = new AudioContext;
-  //     let body = blob.body;
-  //     let reader = body.getReader();
-  //     reader.read().then((result) => {
-  //     console.log(result);
-  //     }) 
-//____________________________________________________________________________________________________________________
-
 // sends message
 
 sendMsg(e) {
@@ -215,42 +182,22 @@ sendMsg(e) {
     this.setState({
       status: 'Message sent',
       inputText: '',
-      translatedResponse: '',
+      responseBox: '',
       canSend: false,
       sendStyle: {backgroundColor: '#FF5E5B'},
     });
   }
 }
 
-// sends input text to backend to be translated and sets state with translated resul [then sends info to TTS] <-- own func?
-translation(e) {
+// resends inputText for re-translation
+translateAgain(e) {
   this.setState({resultStyle: null});
-  // fetch('/translation/translate', {
-  //   credentials: 'same-origin',
-  //   method: 'POST',
-  //   headers: {
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify({
-  //     text: this.state.inputText,
-  //     langFrom: this.state.langFrom,
-  //     langTo: this.state.langTo,
-  //   })
-  // })
-  // .then((res) => {
-  //   return res.json()
-  // })
-  // .then((json) => {
-  //   console.log(json);
-  //   this.setState({
-  //       inputText: json.data.stsTranslation,
-  //       result: json.data.translation,
-  //       resultStyle: 'text-animate',
-  //       status: 'Ready to send message',
-  //       sendStyle: {backgroundColor: 'lightgreen'},
-  //       canSend: true,
-  //   });
-  // })
+  let data = {
+    message: this.state.inputText,
+    from: this.state.langFrom,
+    to: this.state.langTo,
+  }
+  io.emit('translate again', data);
 }
 
 
@@ -258,7 +205,7 @@ translation(e) {
   speak() {
     console.log('in speak function');
     let speakLang;
-    switch (this.state.langFrom) {
+    switch (this.state.convoMode? this.state.langFrom : this.state.langTo) {
       case 'es': 
         speakLang = 'Spanish Latin American Female';
         break;
@@ -277,7 +224,7 @@ translation(e) {
       case 'it': 
         speakLang = 'Italian Female';
         break;
-      case 'ar-eg': 
+      case 'ar': 
         speakLang = 'Arabic Male';
         break;
       case 'zh-cn': 
@@ -293,31 +240,11 @@ translation(e) {
         speakLang = 'US English Female';
         break;
     }
-    let response = this.state.translatedResponse
+    let response = this.state.responseBox
     this.setState({speakLang: speakLang})
-    console.log(this.state.translatedResponse, speakLang);
+    console.log(this.state.responseBox, speakLang);
     responsiveVoice.speak(response, speakLang);
   }
-
-//submits info to save phrase [delete?]
-  handlePhraseSubmit() {
-    let lang = document.querySelector('#langFrom')[0].value;
-    fetch('/api/phrases', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          credentials: "same-origin",
-          body: JSON.stringify({
-                phrase: this.state.text,
-                language: lang,
-          }),
-    })
-    .then((res) => {
-          return res.json()
-    })
-    .then((json) => {
-          console.log(json);
-    })
-}
 
 // toggles conversation mode on/off
   convoToggle() {
@@ -336,51 +263,6 @@ translation(e) {
       result: ''
     });
   }
-
-//  recorderInitialize() {
-//  let record = document.getElementById('start-recog');
-//     if (navigator.mediaDevices) {
-//       var constraints = { audio: true };
-//       let count = 0;
-//       let str;
-//       navigator.mediaDevices.getUserMedia(constraints)
-//       .then((stream) => {
-//         var audioContext = window.AudioContext;
-//         var context = new audioContext();
-//         var audioInput = context.createMediaStreamSource(stream);
-//         var bufferSize = 2048;
-//         // create a javascript node
-//         var recorder = context.createScriptProcessor(bufferSize, 1, 1);
-
-//         // specify the processing function
-//         recorder.onaudioprocess = recorderProcess;
-//         var sStream = ss.createStream();
-//         ss(socket).emit('stream', sStream);
-//         // connect stream to our recorder
-//         audioInput.connect(recorder);
-//         // connect our recorder to the previous destination
-//         recorder.connect(context.destination);
-
-//         function recorderProcess(e) {
-
-//         //   for (
-//         var float32Array = e.inputBuffer.getChannelData(0) || new Float32Array(this.bufferSize);
-//         // len = float32Array.length,
-//         // int16Array = new Int16Array(len);
-//         // len--;)
-//         // int16Array[len] = 32767 * Math.min(1, float32Array[len]);
-//         // ss(socket).emit('stream', int16Array.buffer);
-//         sStream.write('hola ');
-//           var left = convertFloat32ToInt16(e.inputBuffer.getChannelData(0));
-//           // sStream.write(left)
-//           // console.log(sStream);
-//           //var f = $("#aud").attr("src");
-//           // var src = window.URL.createObjectURL(stream);
-//           // ss.createBlobReadStream(src).pipe(sStream);
-//           //ss.createReadStream(f).pipe(widnow.stream);
-
-//             }
-
 
 
   recorderInitialize() {
@@ -404,7 +286,11 @@ translation(e) {
 
         record.onclick = () => {
           var sStream = ss.createStream();
-          ss(io).emit('stream', sStream, this.state.langFrom, this.state.langTo);
+          let data = {
+            langFrom: this.state.langFrom,
+            langTo: this.state.langTo,
+          }
+          ss(io).emit('stream', sStream, data);
           if (this.state.rdyToRecord === true) {
           mediaRecorder.start(10000);
           this.setState({
@@ -419,35 +305,13 @@ translation(e) {
         else if (this.state.isRecording === true) {
           mediaRecorder.stop();
           console.log('stopped')
-          var file = new File([blobby], 'msr-' + (new Date).toISOString().replace(/:|\./g, '-') + '.wav', {
-            type: 'audio/wav' // is file necessary?
-          });
-          // console.log(url);
-          //   audio.src = url;
-          //   audio.play();
-          ss.createBlobReadStream(file).pipe(sStream);
+          ss.createBlobReadStream(blobby).pipe(sStream);
           this.setState({
             recClass: 'off',
             status: 'Processing audio',
             isRecording: false,
           });
           console.log("recorder stopped - status: ", this.state.status);
-          // mediaRecorder.onstop = (e) => {
-
-            // var audioBox = document.getElementById('audio-box');
-            // var audio = document.createElement('audio');
-            // audioBox.appendChild(audio);
-
-            // var blob = new Blob(chunks, {'type' : 'audio/ogg; codecs=pcm'});
-            //   chunks = [];
-            //   ss(socket).emit('stream', sStream);
-            //   sStream.write(blob);
-            //   console.log(blob);
-              // let url = URL.createObjectURL(blob)
-
-              // console.log(blob);
-              // this.recognizeAudio(url);
-            // }
           }
         }
       })
@@ -462,18 +326,18 @@ translation(e) {
       <div id='audio-box'><audio id='audio' /></div>
         <div id='translation-div'>
           <div id='input-div'>
-            <form id='translation-form' onSubmit={(e) => this.translation(e)}>
-              <textarea id='input-box' name='text' rows='3' value={this.state.inputText} className={this.state.textStyle} onChange={(e) => this.handleInput(e)}/>
-              <div id='tr-again-div'onClick={this.translation}>Translate Again</div>
+            <form id='translation-form'>
+              <textarea id='input-box' name='text' rows='3' value={this.state.inputText} className={this.state.textStyle} onChange={(e) => this.handleChange(e, 'inputText')}/>
+              <div id='tr-again-div'onClick={this.translateAgain}>Translate Again</div>
                 <div id='to-from-div'>
-                    <select name='langFrom' className='langInput' defaultValue='eng-USA' id='langFrom' onChange={(e) => {this.handleLangFromChange(e)}}> 
+                    <select name='langFrom' className='langInput' defaultValue='eng-USA' id='langFrom' onChange={(e) => {this.handleChange(e, 'langFrom')}}> 
                       <option value='en'>English</option>
                       <option value='es'>Spanish</option>
                       <option value='fr'>French</option>
                       <option value='pt'>Portuguese</option>
                       <option value='it'>Italian</option>
                       <option value='ru'>Russian</option>
-                      <option value='ar-eg'>Arabic</option>
+                      <option value='ar'>Arabic</option>
                       <option value='zh-cn'>Chinese</option>
                       <option value='ja'>Japanese</option>
                       <option value='de'>German</option>
@@ -489,14 +353,14 @@ translation(e) {
                     <div id='triangle-bottomright'></div>
                   </div>
                   <div id='green'></div>
-                    <select name='langTo' id='langTo' className='langInput' defaultValue='es' onChange={(e) => {this.handleLangToChange(e)}}> 
+                    <select name='langTo' id='langTo' className='langInput' defaultValue='es' onChange={(e) => {this.handleChange(e, 'langTo')}}> 
                       <option value='en'>English</option>
                       <option value='es'>Spanish</option>
                       <option value='fr'>French</option>
                       <option value='pt'>Portuguese</option>
                       <option value='it'>Italian</option>
                       <option value='ru'>Russian</option>
-                      <option value='ar-eg'>Arabic</option>
+                      <option value='ar'>Arabic</option>
                       <option value='zh-cn'>Chinese</option>
                       <option value='ja'>Japanese</option>
                       <option value='de'>German</option>
@@ -508,7 +372,7 @@ translation(e) {
                     </select>
                   </div>
                 {/*<input id='submit-btn' type='submit'/>*/}
-              <textarea id='result-box' name='result' rows='3' value={this.state.translatedResponse} className={this.state.resultStyle} onChange={(e) => this.handleResult(e)}></textarea>
+              <textarea id='result-box' name='result' rows='3' value={this.state.responseBox} className={this.state.resultStyle} onChange={(e) => this.handleChange(e, 'result')}></textarea>
             </form>
           </div>
           <div id='controls'>
@@ -522,7 +386,7 @@ translation(e) {
             <div id='recognize-button-container' className={this.state.recClass}>
               <button id='start-recog'><i className={`${this.state.recClass} fa fa-microphone fa-3x`} aria-hidden="true"></i></button>
             </div>
-            <button id='send-btn' style={this.state.sendStyle} onClick={(e) => {this.sendMsg(e)}}>Send!</button>
+            <button id='send-btn' style={this.state.convoMode ? this.state.sendStyle: {backgroundColor: 'gray', opacity: 0.3}} onClick={(e) => {this.sendMsg(e)}}>Send!</button>
           </div>
         </div>
       </div>

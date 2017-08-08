@@ -36,6 +36,10 @@ app.use(bodyParser.urlencoded({extended: false}));
 
 let socketIds = [];
 
+function translation(data) {
+  
+}
+
 // connect socket
 io.on('connection', (socket) => { 
   socketIds.push(socket.id);
@@ -50,14 +54,14 @@ io.on('connection', (socket) => {
   })
 
   //stream received for speech recognition
-  ss(socket).on('stream', function(stream, langFrom, langTo) {
+  ss(socket).on('stream', function(stream, data) {
     console.log('streamed');
 
 const speechReq = {
   config: {
     encoding: 'LINEAR16',
     sampleRateHertz: 44100,
-    languageCode: langFrom,
+    languageCode: data.langFrom,
   },
   interimResults: false // If you want interim results, set this to true
 };
@@ -65,12 +69,12 @@ const speechReq = {
 // Create a recognize stream
 const recognizeStream = speech.streamingRecognize(speechReq)
   .on('error', console.error)
-  .on('data', (data) => {
-    let text = data.results[0].alternatives[0].transcript;
+  .on('data', (results) => {
+    text = results.results[0].alternatives[0].transcript;
     console.log(`recognized: ${text}`);
     let options = {
-      from: langFrom,
-      to: langTo,
+      from: data.langFrom,
+      to: data.langTo,
     }
     translateClient.translate(text, options)
     .then((results) => {
@@ -112,18 +116,18 @@ stream.pipe(recognizeStream);
   })
 
   //translation with socket? 
-  socket.on('translate', (data) => {
+  socket.on('translate again', (data) => {
     console.log('translate testing');
     console.log(data);
     let text = data.message;
     let options = {
-      from: 'en',
+      from: data.from,
       to: data.to,
     }
     translateClient.translate(text, options)
     .then((results) => {
       translation = results[0];
-      console.log(translation);
+      console.log(`translated: ${translation}`);
       options = {
         from: options.to,
         to: options.from,
@@ -131,7 +135,20 @@ stream.pipe(recognizeStream);
       .catch((err) => {
       console.error('ERROR:', err);
     })
-  })
+    .then(() => {translateClient.translate(translation, options)
+      .then((results) => {
+        let stsTranslation = results[0];
+        console.log(`translated2: ${stsTranslation}`);
+        console.log('translation', translation)
+        console.log('sts translation', stsTranslation);
+        socket.emit('sts', {
+            translation: translation, 
+            stsTranslation: stsTranslation,
+            source: options.from, 
+            target: options.to})
+      })
+    })
+  });
 
   //send translated message to other user
   socket.on('send', (message) => {

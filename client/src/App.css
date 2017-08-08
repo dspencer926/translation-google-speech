@@ -407,6 +407,7 @@ select {
   outline: none;
   border-radius: 15px;
   cursor: pointer;
+  user-select: none;
 }
 
 #recognize-button-container {
