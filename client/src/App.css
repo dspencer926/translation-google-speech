@@ -199,29 +199,9 @@ textarea {
   border-bottom-right-radius: 15px;
 }
 
-select, input {
-  border: 1px solid black;
-  margin: 10px;
-  outline: none;
-}
-
-
-option {
-  background-color: #FFFFEA;
-}
-
 button {
   outline: none;
 }
-
-select {
-  height: 40px;
-  font-size: 1.25em;
-  text-align: center;
-  width: 130px;
-}
-
-
 
 #submit-btn {
   justify-content: center;
@@ -270,6 +250,7 @@ select {
 .langInput {
   display: flex;
   position: relative;
+  height: 40px;
   flex: 3;
   font-size: 1em;
   text-align-last: center;
@@ -357,12 +338,27 @@ select {
 #username-div {
   display: flex;
   position: fixed;
-  height: 20%;
+  background-color: rgba(0,0,0,0.5);
+  border-radius: 15px;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  height: 55%;
   width: 50%;
+  top: 10%;
   align-self: center;
-  z-index: 2 !important;
-  border: 1px solid black;
+  z-index: 3 !important;
+}
 
+#user-select-div {
+  width: 50%;
+}
+
+#current-users {
+  text-align: center;
+  background-color: rgba(0,0,0,0.7);
+  color: white;
+  width: 100%;
 }
 
 #controls {

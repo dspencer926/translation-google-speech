@@ -59,12 +59,21 @@ io.on('connection', (socket) => {
     })
   })
 
+  socket.on('userList', () => {
+    console.log(usernamesOnline);
+    socket.emit('userListResponse', usernamesOnline);
+  });
+
   //username submission
   socket.on('username', (username) => {
     socket.nickname = username;
-    usernamesOnline.push(socket);
+    usernamesOnline.push({username: username, socketID: socket.id});
     console.log(usernamesOnline.length);
     console.log(socket.id + ': ' + socket.nickname);
+  })
+
+  socket.on('userConnect', (user)=> {
+    socket.broadcast.to(user.socketID).emit('recognized', 'hellooooo')
   })
 
   //stream received for speech recognition

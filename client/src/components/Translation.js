@@ -24,6 +24,8 @@ class Translation extends Component {
       convoStyle: {backgroundColor: '#FFFFEA', color: 'black'},     //  conversation mode button style
       usernameEntry: false,                                         //  if username entry box should appear
       username: '',                                                 //  current username
+      usersOnline: [],                                              //  array of users online {username, userID}
+      userSelected: '',                                             //  username currently selected from list
       chattingWith: '',                                             //  currently chatting with (username)
       textStyle: null,                                              //  for animation of text
       resultStyle: null,                                            //  ''
@@ -34,12 +36,21 @@ class Translation extends Component {
     this.recorderInitialize = this.recorderInitialize.bind(this);
     this.usernameSubmit = this.usernameSubmit.bind(this);
     this.translateAgain = this.translateAgain.bind(this);
+    this.userChatSelect = this.userChatSelect.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.switchLangs = this.switchLangs.bind(this);
     this.convoToggle = this.convoToggle.bind(this);
     this.clear = this.clear.bind(this);
     this.speak = this.speak.bind(this);
 
+    // receive list of usernames
+    io.on('userListResponse', (userList) => {
+      this.setState({usersOnline: userList}, (userList) => {
+        console.log(this.state.usersOnline);
+      })      
+    }) 
+
+    // receive translation and sts translation
     io.on('sts', (response) => {
       this.setState((prevState) => { 
         return {
@@ -59,6 +70,7 @@ class Translation extends Component {
       })
     })
 
+    //receive message from other user?
     io.on('translatedResponse', (response) => {
       console.log(response);
       this.setState({
@@ -70,12 +82,16 @@ class Translation extends Component {
         this.speak()
       })
     });
+
+    // confirmation of receipt?
     io.on('received', () => {
       this.setState({
         status: 'Message received',
         rdyToRecord: true,
       });
     })
+
+    // receive voice recognition response
     io.on('recognized', (message) => {
       console.log(message);
       this.setState({inputText: message,})
@@ -96,14 +112,41 @@ handleChange(e, field) {
   });
 }
 
+// toggles conversation mode on/off
+  convoToggle() {
+    console.log('in convo toggle')
+    this.setState({convoMode: !this.state.convoMode},
+    () => {
+      if (this.state.convoMode === true) {
+        this.setState({
+          convoStyle: {backgroundColor: 'black', color: 'white'},
+          usernameEntry: true,
+        });
+        console.log('userlist?')
+        io.emit('userList'); 
+      } else {
+        this.setState({convoStyle: {backgroundColor: '#FFFFEA', color: 'black'}})
+      }
+    });
+  }
+
 usernameSubmit() {
   let username = this.state.username;
   io.emit('username', username)
-  this.setState({usernameEntry: false});
+  // this.setState({usernameEntry: false});
+}
+
+userChatSelect() {
+  let findUser = (user) => { 
+    console.log('in function');
+    return user.username === this.state.userSelected;
+  }
+  let userToConnect = this.state.usersOnline.find(findUser);
+  io.emit('userConnect', (userToConnect));
+
 }
 
 switchLangs() {
-  console.log(this.state.langFrom, this.state.langTo)
   this.setState((prevState) => { 
     return {
       langFrom: prevState.langTo,
@@ -235,21 +278,6 @@ translateAgain(e) {
     responsiveVoice.speak(response, speakLang);
   }
 
-// toggles conversation mode on/off
-  convoToggle() {
-    console.log('in convo toggle')
-    this.setState({convoMode: !this.state.convoMode},
-    () => {
-      if (this.state.convoMode === true) {
-        this.setState({
-          convoStyle: {backgroundColor: 'black', color: 'white'},
-          usernameEntry: true,
-        })       
-      } else {
-        this.setState({convoStyle: {backgroundColor: '#FFFFEA', color: 'black'}})
-      }
-    });
-  }
 
 //clears both input/result divs
   clear() {
@@ -320,15 +348,23 @@ translateAgain(e) {
       <div id='translation-container'>
       <div id='audio-box'><audio id='audio' /></div>
         <div id='translation-div'>
-          {this.state.usernameEntry ? 
-          <div id='username-div'>
-            <div id='username-input-div'>
-              <input id='username-entry' type='text' onChange={(e) => {this.handleChange(e, 'username')}}></input>
-              <button id='username-submit' onClick={this.usernameSubmit}> -> </button>
-            </div>
-          </div>
-          : null}
           <div id='input-div'>
+            {this.state.usernameEntry ? 
+            <div id='username-div'>
+              <div id='username-input-div'>
+                <input id='username-entry' type='text' onChange={(e) => {this.handleChange(e, 'username')}}></input>
+                <button id='username-submit' onClick={this.usernameSubmit}> -> </button>
+              </div>
+              <div id='user-select-div'>
+                <select id='current-users' size='4' multiple='multiple' onChange={(e) => {this.handleChange(e, 'userSelected')}}>
+                  {this.state.usersOnline.map((user) => {
+                    return <option>{user.username}</option>
+                  })}
+                </select>
+                <button id='choose-chat-user' onClick={this.userChatSelect}>Connect</button>
+              </div>
+            </div>
+            : null}
             <form id='translation-form'>
               <textarea id='input-box' name='text' rows='3' value={this.state.inputText} className={this.state.textStyle} onChange={(e) => this.handleChange(e, 'inputText')}/>
               <div id='tr-again-div'onClick={this.translateAgain}>Translate Again</div>
