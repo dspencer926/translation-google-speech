@@ -45,7 +45,7 @@ function translation(data) {
 io.on('connection', (socket) => { 
   socketIds.push(socket.id);
   console.log(`${socket.id} has connected`);
-
+  let chattingWith;  // user currently chatting with
 
   // socket disconnect
   socket.on('disconnect', () => {
@@ -73,7 +73,23 @@ io.on('connection', (socket) => {
   })
 
   socket.on('userConnect', (user)=> {
-    socket.broadcast.to(user.socketID).emit('recognized', 'hellooooo')
+    return new Promise((resolve, reject) => {
+      socket.broadcast.to(user.socketID).emit('chatRequest', {username: socket.nickname, socketID: socket.id});
+      socket.on('accepted', () => {resolve()});
+      socket.on('rejected', () => {reject()});
+    })
+    .then(()=>{socket.emit('accepted')})
+    .catch(()=>{socket.emit('rejected')});
+  })
+
+  socket.on('accept', (user) => {
+    console.log('accept function');
+    socket.broadcast.to(user.socketID).emit('accepted');
+  })
+
+  socket.on('reject', (user) => {
+    console.log('reject function');
+    socket.broadcast.to(user.socketID).emit('rejected');
   })
 
   //stream received for speech recognition
@@ -175,15 +191,14 @@ stream.pipe(recognizeStream);
 
   //send translated message to other user
   socket.on('send', (message) => {
-    let testSocket = socketIds.filter((val) => {
-    return (val !== socket.id)
-  })
-    console.log(testSocket);
-    console.log('testing, should send to: ', testSocket[0], 'message: ', message);
-    socket.broadcast.to(testSocket[0]).emit('translatedResponse', message);
+    let userID = chattingWith.socketID;
+    console.log('should send to: ', userID, 'message: ', message);
+    socket.broadcast.to(userID).emit('translatedResponse', message);
   });
+
+
   socket.on('received', () => {
-    socket.broadcast.emit('received');
+    socket.broadcast.to.apply(userID).emit('received');
   })
 })
 

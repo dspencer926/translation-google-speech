@@ -26,7 +26,7 @@ class Translation extends Component {
       username: '',                                                 //  current username
       usersOnline: [],                                              //  array of users online {username, userID}
       userSelected: '',                                             //  username currently selected from list
-      chattingWith: '',                                             //  currently chatting with (username)
+      chattingWith: null,                                             //  currently chatting with (username)
       textStyle: null,                                              //  for animation of text
       resultStyle: null,                                            //  ''
       status: null,                                                 //  status of app overall for user to view
@@ -49,6 +49,17 @@ class Translation extends Component {
         console.log(this.state.usersOnline);
       })      
     }) 
+
+    io.on('chatRequest', (user) => {
+      console.log('request from: ', user.username);
+      // if (chatRequestBox(user)) {
+        this.setState({chattingWith: user});
+        io.emit('accept', user);
+      // } else {
+      //   io.emit('reject');
+      // }
+
+    })
 
     // receive translation and sts translation
     io.on('sts', (response) => {
@@ -142,7 +153,17 @@ userChatSelect() {
     return user.username === this.state.userSelected;
   }
   let userToConnect = this.state.usersOnline.find(findUser);
-  io.emit('userConnect', (userToConnect));
+  return new Promise((resolve, reject) => {
+    io.emit('userConnect', (userToConnect));
+    io.on('accepted', () => {resolve()})
+    io.on('rejected', () => {reject()})
+  })
+  .then(() => {
+    console.log('accepted!')
+  })
+  .catch(() => {
+    console.log('shut downnnn');
+  })
 
 }
 
@@ -210,7 +231,7 @@ sendMsg(e) {
   e.preventDefault();
   if (this.state.canSend) {
     console.log(io.id);
-    io.emit('send', this.state.result);
+    io.emit('send', this.state.result, this.state.chattingWith);
     this.setState({
       status: 'Message sent',
       inputText: '',
