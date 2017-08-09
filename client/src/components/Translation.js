@@ -8,7 +8,7 @@ class Translation extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      langFrom: 'eng_USA',                                          //  source language code (from drop-down)
+      langFrom: 'en',                                               //  source language code (from drop-down)
       langTo: 'es',                                                 //  target language code (from drop-down)
       speakLang: '',                                                //  language-code for TTS to speak
       audioClip: null,                                              //  TTS audio clip 
@@ -22,6 +22,9 @@ class Translation extends Component {
       recClass: 'off',                                              //  class for record button animation
       convoMode: false,                                             //  conversation mode on/off
       convoStyle: {backgroundColor: '#FFFFEA', color: 'black'},     //  conversation mode button style
+      usernameEntry: false,                                         //  if username entry box should appear
+      username: '',                                                 //  current username
+      chattingWith: '',                                             //  currently chatting with (username)
       textStyle: null,                                              //  for animation of text
       resultStyle: null,                                            //  ''
       status: null,                                                 //  status of app overall for user to view
@@ -29,9 +32,10 @@ class Translation extends Component {
       sendStyle: {backgroundColor: '#FF5E5B'},                      //  bkgrnd color of send button
     }
     this.recorderInitialize = this.recorderInitialize.bind(this);
-    this.recognizeAudio = this.recognizeAudio.bind(this);
-    this.handleChange = this.handleChange.bind(this);
+    this.usernameSubmit = this.usernameSubmit.bind(this);
     this.translateAgain = this.translateAgain.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.switchLangs = this.switchLangs.bind(this);
     this.convoToggle = this.convoToggle.bind(this);
     this.clear = this.clear.bind(this);
     this.speak = this.speak.bind(this);
@@ -49,7 +53,9 @@ class Translation extends Component {
           canSend: this.state.convoMode? true: false,
         }
       }, () => {
-        this.state.convoMode? null : this.speak();
+        if (!this.state.convoMode) {
+          this.speak();
+        }
       })
     })
 
@@ -77,14 +83,9 @@ class Translation extends Component {
   }
 
 componentDidMount() {
-  let langFrom = document.querySelector('#langFrom')[0].value;
-  let langTo = document.querySelector('#langTo')[0].value;
   this.setState({
-    langFrom: langFrom,
-    langTo: langTo,
     status: 'Ready for input',
   });
-  console.log(langFrom, langTo);
   this.recorderInitialize()
 }
 
@@ -95,33 +96,21 @@ handleChange(e, field) {
   });
 }
 
-// sends recorded audio to backend for recognition [then creates choice div if necessary] <-- make its own function?
-recognizeAudio(message) {
-
-
-  this.setState({textStyle: null});
-  // fetch('/translation/recognize', {
-  //   credentials: 'same-origin',
-  //   method: 'POST',
-  //   headers: {
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify({
-  //     message: url,
-  //   }),
-  // })
-  // .then((res) => {
-  //   return res.json()
-  // })
-  // .then((json) => {
-    this.setState({
-      status: 'Ready for input',
-      rdyToRecord: true,
-    })
-
-  // })
+usernameSubmit() {
+  let username = this.state.username;
+  io.emit('username', username)
+  this.setState({usernameEntry: false});
 }
-  
+
+switchLangs() {
+  console.log(this.state.langFrom, this.state.langTo)
+  this.setState((prevState) => { 
+    return {
+      langFrom: prevState.langTo,
+      langTo: prevState.langFrom,
+    }
+  })
+}
 
 // will be able to delete as soon as I implement text animation in a different function
 choiceDiv(arr) {
@@ -248,11 +237,17 @@ translateAgain(e) {
 
 // toggles conversation mode on/off
   convoToggle() {
+    console.log('in convo toggle')
     this.setState({convoMode: !this.state.convoMode},
     () => {
       if (this.state.convoMode === true) {
-        this.setState({convoStyle: {backgroundColor: 'black', color: 'white'}})
-      } else {this.setState({convoStyle: {backgroundColor: '#FFFFEA', color: 'black'}})}
+        this.setState({
+          convoStyle: {backgroundColor: 'black', color: 'white'},
+          usernameEntry: true,
+        })       
+      } else {
+        this.setState({convoStyle: {backgroundColor: '#FFFFEA', color: 'black'}})
+      }
     });
   }
 
@@ -325,12 +320,20 @@ translateAgain(e) {
       <div id='translation-container'>
       <div id='audio-box'><audio id='audio' /></div>
         <div id='translation-div'>
+          {this.state.usernameEntry ? 
+          <div id='username-div'>
+            <div id='username-input-div'>
+              <input id='username-entry' type='text' onChange={(e) => {this.handleChange(e, 'username')}}></input>
+              <button id='username-submit' onClick={this.usernameSubmit}> -> </button>
+            </div>
+          </div>
+          : null}
           <div id='input-div'>
             <form id='translation-form'>
               <textarea id='input-box' name='text' rows='3' value={this.state.inputText} className={this.state.textStyle} onChange={(e) => this.handleChange(e, 'inputText')}/>
               <div id='tr-again-div'onClick={this.translateAgain}>Translate Again</div>
                 <div id='to-from-div'>
-                    <select name='langFrom' className='langInput' defaultValue='eng-USA' id='langFrom' onChange={(e) => {this.handleChange(e, 'langFrom')}}> 
+                    <select name='langFrom' className='langInput' value={this.state.langFrom} id='langFrom' onChange={(e) => {this.handleChange(e, 'langFrom')}}> 
                       <option value='en'>English</option>
                       <option value='es'>Spanish</option>
                       <option value='fr'>French</option>
@@ -349,11 +352,14 @@ translateAgain(e) {
                     </select>
                   <div id='yellow'></div>
                   <div id='triangle-div'>
+                    <div id='exchg-arrows' onClick={this.switchLangs}>
+                      <i className="fa fa-exchange fa-2x" aria-hidden="true"></i>
+                    </div>
                     <div id='triangle-topleft'></div>
                     <div id='triangle-bottomright'></div>
                   </div>
                   <div id='green'></div>
-                    <select name='langTo' id='langTo' className='langInput' defaultValue='es' onChange={(e) => {this.handleChange(e, 'langTo')}}> 
+                    <select name='langTo' id='langTo' className='langInput' value={this.state.langTo} onChange={(e) => {this.handleChange(e, 'langTo')}}> 
                       <option value='en'>English</option>
                       <option value='es'>Spanish</option>
                       <option value='fr'>French</option>

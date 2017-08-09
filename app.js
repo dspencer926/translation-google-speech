@@ -35,6 +35,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 
 
 let socketIds = [];
+let usernamesOnline = []
 
 function translation(data) {
   
@@ -45,12 +46,25 @@ io.on('connection', (socket) => {
   socketIds.push(socket.id);
   console.log(`${socket.id} has connected`);
 
+
   // socket disconnect
   socket.on('disconnect', () => {
+    if (socket.nickname !== undefined) {
+      usernamesOnline.splice( usernamesOnline.indexOf(socket), 1 );
+      console.log(usernamesOnline.length);
+    }
     console.log(`${socket.id} has disconnected`);
     socketIds = socketIds.filter((val) => {
       return (val !== socket.id)
     })
+  })
+
+  //username submission
+  socket.on('username', (username) => {
+    socket.nickname = username;
+    usernamesOnline.push(socket);
+    console.log(usernamesOnline.length);
+    console.log(socket.id + ': ' + socket.nickname);
   })
 
   //stream received for speech recognition
