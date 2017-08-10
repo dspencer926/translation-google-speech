@@ -22,11 +22,13 @@ class Translation extends Component {
       recClass: 'off',                                              //  class for record button animation
       convoMode: false,                                             //  conversation mode on/off
       convoStyle: {backgroundColor: '#FFFFEA', color: 'black'},     //  conversation mode button style
+      myUserInfo: {},                                               //  SocketID and username of current session
+      signedIn: false,                                              //  if user is signed in with username
       usernameEntry: false,                                         //  if username entry box should appear
-      username: '',                                                 //  current username
-      usersOnline: [],                                              //  array of users online {username, userID}
+      username: '',                                                 //  current username (for purposes of input)
+      usersOnline: [],                                              //  array of users online {username, socketID}
       userSelected: '',                                             //  username currently selected from list
-      chattingWith: null,                                             //  currently chatting with (username)
+      chattingWith: null,                                           //  currently chatting with (username)
       textStyle: null,                                              //  for animation of text
       resultStyle: null,                                            //  ''
       status: null,                                                 //  status of app overall for user to view
@@ -34,14 +36,27 @@ class Translation extends Component {
       sendStyle: {backgroundColor: '#FF5E5B'},                      //  bkgrnd color of send button
     }
     this.recorderInitialize = this.recorderInitialize.bind(this);
+    this.closeConvoWindow = this.closeConvoWindow.bind(this);
+    this.leaveConvoMode = this.leaveConvoMode.bind(this);
     this.usernameSubmit = this.usernameSubmit.bind(this);
     this.translateAgain = this.translateAgain.bind(this);
     this.userChatSelect = this.userChatSelect.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.switchLangs = this.switchLangs.bind(this);
     this.convoToggle = this.convoToggle.bind(this);
+    this.disconnect = this.disconnect.bind(this);
+    this.signOff = this.signOff.bind(this);
     this.clear = this.clear.bind(this);
     this.speak = this.speak.bind(this);
+
+    // set socket ID
+    io.on('myID', (id) => {
+      let info = this.state.myUserInfo;
+      info.socketID = id;
+      this.setState({
+        myUserInfo: info,  
+      })
+    })
 
     // receive list of usernames
     io.on('userListResponse', (userList) => {
@@ -52,13 +67,23 @@ class Translation extends Component {
 
     io.on('chatRequest', (user) => {
       console.log('request from: ', user.username);
-      // if (chatRequestBox(user)) {
-        this.setState({chattingWith: user});
-        io.emit('accept', user);
-      // } else {
-      //   io.emit('reject');
-      // }
+      if (window.confirm(`${user.username} would like to connect with you.  Do you accept?`)) {
+        this.setState({chattingWith: user}, () => {
+          console.log(this.state.chattingWith);
+          io.emit('accept', user, this.state.myUserInfo);
+        });
+      } else {
+        io.emit('reject', user);
+      }
+    })
 
+    io.on('disconnectChat', () => {
+      alert(`${this.state.chattingWith.username} has closed your chat connection!`);
+      this.setState({chattingWith: null});
+    })
+
+    io.on('signedOff', () => {
+      alert('you hve been sucessfully signed off');
     })
 
     // receive translation and sts translation
@@ -89,13 +114,14 @@ class Translation extends Component {
         responseBox: response,
         rdyToRecord: true,
       }, () => {
-        io.emit('received');
+        io.emit('received', this.state.chattingWith);
         this.speak()
       })
     });
 
     // confirmation of receipt?
     io.on('received', () => {
+      console.log('received')
       this.setState({
         status: 'Message received',
         rdyToRecord: true,
@@ -125,26 +151,48 @@ handleChange(e, field) {
 
 // toggles conversation mode on/off
   convoToggle() {
-    console.log('in convo toggle')
-    this.setState({convoMode: !this.state.convoMode},
-    () => {
-      if (this.state.convoMode === true) {
-        this.setState({
-          convoStyle: {backgroundColor: 'black', color: 'white'},
-          usernameEntry: true,
-        });
-        console.log('userlist?')
-        io.emit('userList'); 
-      } else {
-        this.setState({convoStyle: {backgroundColor: '#FFFFEA', color: 'black'}})
-      }
+    this.setState({
+      convoStyle: {backgroundColor: 'black', color: 'white'},
+      usernameEntry: true,
+      convoMode: true,
     });
+    console.log('userlist?')
+    io.emit('userList'); 
+    // () => {
+    //   } else {
+    //     this.setState({convoStyle: {backgroundColor: '#FFFFEA', color: 'black'}})
+    //   }
+    // });
+  }
+
+  leaveConvoMode() {
+    this.setState({
+      convoStyle: {backgroundColor: '#FFFFEA', color: 'black'},
+      usernameEntry: false,
+      convoMode: false,
+    }, () => {
+      this.signOff();
+    })
   }
 
 usernameSubmit() {
   let username = this.state.username;
-  io.emit('username', username)
-  // this.setState({usernameEntry: false});
+  return new Promise((resolve, reject) => {
+    io.emit('username', username);
+    io.on('usernameReceived', () => {resolve(username)})
+    io.on('usernameTaken', () => {reject()});
+  })
+  .then((username) => {
+    let info = this.state.myUserInfo;
+    info.username = username;
+    this.setState({
+      myUserInfo: info,
+      signedIn: true,
+    });
+  })
+  .catch(() => {
+    console.log('username taken');
+  })
 }
 
 userChatSelect() {
@@ -155,16 +203,42 @@ userChatSelect() {
   let userToConnect = this.state.usersOnline.find(findUser);
   return new Promise((resolve, reject) => {
     io.emit('userConnect', (userToConnect));
-    io.on('accepted', () => {resolve()})
+    io.on('accepted', (user) => {resolve(user)})
     io.on('rejected', () => {reject()})
   })
-  .then(() => {
+  .then((user) => {
+    this.setState({chattingWith: user}, ()=> {
     console.log('accepted!')
+    })
   })
   .catch(() => {
     console.log('shut downnnn');
   })
+}
 
+disconnect() {
+  if (this.state.chattingWith !== null) {
+    io.emit('disconnectFrom', this.state.chattingWith);
+    this.setState({chattingWith: null});
+  }
+}
+
+signOff() {
+  if (this.state.myUserInfo.username) {
+    this.disconnect();
+    let info = this.state.myUserInfo;
+    console.log(info);
+    io.emit('signOff', info);
+    info.username = null;
+    this.setState({
+      myUserInfo: info,
+      signedIn: false,
+    });
+  }
+}
+
+closeConvoWindow() {
+  this.setState({usernameEntry: false})
 }
 
 switchLangs() {
@@ -231,7 +305,8 @@ sendMsg(e) {
   e.preventDefault();
   if (this.state.canSend) {
     console.log(io.id);
-    io.emit('send', this.state.result, this.state.chattingWith);
+    console.log(this.state.chattingWith);
+    io.emit('send', {message: this.state.result, user: this.state.chattingWith});
     this.setState({
       status: 'Message sent',
       inputText: '',
@@ -372,10 +447,16 @@ translateAgain(e) {
           <div id='input-div'>
             {this.state.usernameEntry ? 
             <div id='username-div'>
-              <div id='username-input-div'>
+              {this.state.signedIn ? 
+              <div id='logged-in-info'>
+                <p>You are currently signed in as {this.state.myUserInfo.username}</p>
+                <button onClick={this.signOff}>Sign Off</button>
+              </div>
+              : <div id='username-input-div'>
                 <input id='username-entry' type='text' onChange={(e) => {this.handleChange(e, 'username')}}></input>
                 <button id='username-submit' onClick={this.usernameSubmit}> -> </button>
-              </div>
+              </div>}
+              {this.state.chattingWith === null ? 
               <div id='user-select-div'>
                 <select id='current-users' size='4' multiple='multiple' onChange={(e) => {this.handleChange(e, 'userSelected')}}>
                   {this.state.usersOnline.map((user) => {
@@ -383,6 +464,14 @@ translateAgain(e) {
                   })}
                 </select>
                 <button id='choose-chat-user' onClick={this.userChatSelect}>Connect</button>
+              </div>
+              : <div id='chatting-with'>
+                <p> You are currently chatting with {this.state.chattingWith.username}</p>
+                <button onClick={this.disconnect}>Disconnect</button>
+              </div>}
+              <div id='convo-window-buttons'>
+                <button onClick={this.leaveConvoMode}>Leave Convo Mode</button>
+                <button onClick={this.closeConvoWindow}>OK</button>
               </div>
             </div>
             : null}

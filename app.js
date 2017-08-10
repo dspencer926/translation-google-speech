@@ -45,7 +45,7 @@ function translation(data) {
 io.on('connection', (socket) => { 
   socketIds.push(socket.id);
   console.log(`${socket.id} has connected`);
-  let chattingWith;  // user currently chatting with
+  socket.emit('myID', socket.id);
 
   // socket disconnect
   socket.on('disconnect', () => {
@@ -59,6 +59,20 @@ io.on('connection', (socket) => {
     })
   })
 
+  socket.on('disconnectFrom', (user) => {
+    console.log(`disconnecting from ${user}`)
+    socket.broadcast.to(user.socketID).emit('disconnectChat');
+  })
+
+  socket.on('signOff', (user) => {
+    console.log(user);
+    usernamesOnline = usernamesOnline.filter((val) => {
+      return val.username !== user.username;
+    })
+    console.log(usernamesOnline);
+    socket.emit('signedOff');
+  })
+
   socket.on('userList', () => {
     console.log(usernamesOnline);
     socket.emit('userListResponse', usernamesOnline);
@@ -66,25 +80,26 @@ io.on('connection', (socket) => {
 
   //username submission
   socket.on('username', (username) => {
+    if (usernamesOnline.filter((val) => {
+      return val.username === username
+    }).length === 0){
     socket.nickname = username;
     usernamesOnline.push({username: username, socketID: socket.id});
     console.log(usernamesOnline.length);
     console.log(socket.id + ': ' + socket.nickname);
+    socket.emit('usernameReceived');
+    } else {
+      socket.emit('usernameTaken');
+    }
   })
 
   socket.on('userConnect', (user)=> {
-    return new Promise((resolve, reject) => {
       socket.broadcast.to(user.socketID).emit('chatRequest', {username: socket.nickname, socketID: socket.id});
-      socket.on('accepted', () => {resolve()});
-      socket.on('rejected', () => {reject()});
-    })
-    .then(()=>{socket.emit('accepted')})
-    .catch(()=>{socket.emit('rejected')});
-  })
+    });
 
-  socket.on('accept', (user) => {
+  socket.on('accept', (user, user2) => {
     console.log('accept function');
-    socket.broadcast.to(user.socketID).emit('accepted');
+    socket.broadcast.to(user.socketID).emit('accepted', user2);
   })
 
   socket.on('reject', (user) => {
@@ -190,15 +205,16 @@ stream.pipe(recognizeStream);
   });
 
   //send translated message to other user
-  socket.on('send', (message) => {
-    let userID = chattingWith.socketID;
-    console.log('should send to: ', userID, 'message: ', message);
-    socket.broadcast.to(userID).emit('translatedResponse', message);
+  socket.on('send', (data) => {
+    let userID = data.user.socketID;
+    console.log('should send to: ', userID, 'message: ', data.message);
+    socket.broadcast.to(userID).emit('translatedResponse', data.message);
   });
 
 
-  socket.on('received', () => {
-    socket.broadcast.to.apply(userID).emit('received');
+  socket.on('received', (user) => {
+    console.log('in receive function, should send to: ', user);
+    socket.broadcast.to(user.socketID).emit('received');
   })
 })
 
